@@ -88,8 +88,9 @@ class ContentController {
                 let story = curated[i]
 
                 try {
-                    let currentStoryUser = await User.findOne({ _id: story.ownerId }, "avatar username")
-                    curated[i] = Object.assign(curated[i], { avatar: currentStoryUser.avatar })
+                    let currentStoryUser = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 username")
+                    curated[i] = Object.assign(curated[i], { avatar_50: currentStoryUser.avatar_50 })
+                    curated[i] = Object.assign(curated[i], { avatar_200: currentStoryUser.avatar_200 })
                     curated[i] = Object.assign(curated[i], { ownerUsername: currentStoryUser.username })
                 } catch (err) {
                     console.log(err)
@@ -160,7 +161,7 @@ class ContentController {
 
                 const outputInfo = await imageService.resize_to_png(img.destination + img.filename, 800, newImgName)
                 const compressed = await imageService.compressPng('temp/' + newImgName)
-                const upload = await imageService.upload(compressed.folder + newImgName, "postImages/" + newImgName)
+                const upload = await imageService.upload(compressed.folder + newImgName, "postImages/" + newImgName, true)
 
                 const imgLink = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/postImages%2F${newImgName}?alt=media`
                 imgUrls.push(imgLink)
@@ -223,7 +224,7 @@ class ContentController {
 
         try {
             const story = await Story.findOne({ _id: storyId })
-            const user = await User.findOne({ _id: story.ownerId }, "avatar name username likedStories")
+            const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories")
 
             var likedStoriesIds = []
             for (let i = 0; i < user.likedStories.length; i++) {
@@ -243,7 +244,8 @@ class ContentController {
             // Transforming story Dto
             storyDto.ownerName = user.name
             storyDto.ownerUsername = user.ownerUsername
-            storyDto.ownerAvatar = user.avatar
+            storyDto.avatar_50 = user.avatar_50
+            storyDto.avatar_200 = user.avatar_200
 
 
             return res.json({ story: storyDto, success: true, isLiked })
@@ -265,7 +267,7 @@ class ContentController {
         }
 
         try {
-            const clickedUser = await User.findById(id, "name username avatar banner bio storyViews followerCount followingCount id")
+            const clickedUser = await User.findById(id, "name username avatar_50 avatar_200 banner bio storyViews followerCount followingCount id")
 
             if (!clickedUser) {
                 return res.json({ message: "No such user exists" })
@@ -289,7 +291,8 @@ class ContentController {
                     id: clickedUser.id,
                     name: clickedUser.name,
                     username: clickedUser.username,
-                    avatar: clickedUser.avatar,
+                    avatar_50: clickedUser.avatar_50,
+                    avatar_200: clickedUser.avatar_200,
                     banner: clickedUser.banner,
                     bio: clickedUser.bio,
                     storyViews: clickedUser.storyViews,
@@ -313,7 +316,7 @@ class ContentController {
         }
 
         try {
-            const user = await User.findById(id, "stories avatar username")
+            const user = await User.findById(id, "stories avatar_50 avatar_200 username")
 
             if (!user) {
                 return res.json({ message: "No such user" })
@@ -339,7 +342,8 @@ class ContentController {
                 const story = await Story.findById(mini_story.storyId)
 
                 storiesToSend[i] = new StoryItemDto(story)
-                storiesToSend[i].avatar = user.avatar
+                storiesToSend[i].avatar_50 = user.avatar_50
+                storiesToSend[i].avatar_200 = user.avatar_200
                 storiesToSend[i].ownerUsername = user.username
             }
 

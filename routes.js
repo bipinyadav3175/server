@@ -12,14 +12,16 @@ import contentController from "./controllers/contentController.js"
 
 // Multer Config
 
-const storage = multer.diskStorage({
-    destination: (_, __, cb) => {
-        cb(null, "temp/")
-    },
-    filename: (_, file, cb) => {
-        cb(null, file.originalname)
-    }
-})
+// const storage = multer.diskStorage({
+//     destination: (_, __, cb) => {
+//         cb(null, "temp/")
+//     },
+//     filename: (_, file, cb) => {
+//         cb(null, file.originalname)
+//     }
+// })
+
+const storage = multer.memoryStorage()
 
 const upload = multer({ storage, limits: { fileSize: 1024 * 1024 * 15 } }) // 15 MB
 
@@ -36,6 +38,7 @@ router.get("/story/:id", authMiddleware, contentController.loadStory)
 router.get("/user/:id", authMiddleware, contentController.user)
 router.get("/user-recent-stories/:id", authMiddleware, contentController.userRecentStories)
 router.get("/like/:id", authMiddleware, contentController.like)
+router.post("/update-profile", [authMiddleware, upload.single("avatar")], profileController.updateProfile)
 
 
 export default router

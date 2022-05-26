@@ -38,7 +38,8 @@ class AuthController {
                 firstName: payload.given_name,
                 googleSub: payload.sub,
                 email: payload.email,
-                avatar: payload.picture,
+                avatar_50: payload.picture,
+                avatar_200: payload.picture,
             })
 
             const savedUser = await user.save()
