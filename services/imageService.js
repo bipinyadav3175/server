@@ -18,22 +18,27 @@ admin.initializeApp({
 var bucket = admin.storage().bucket();
 
 class ImageService {
-    async resize_to_png(path, width, newName) {
+    async resize(buffer, width) {
         try {
-            const info = await Sharp(path).resize(width, null).png().toFile('temp/' + newName)
-            await fs.unlink(path)
-
-            return info
+            return await Sharp(buffer).resize(width, null).png().toBuffer()
         } catch (err) {
             console.log(err)
             return undefined
         }
     }
 
-    async compressPng(path) {
+    async saveBuffer(buffer, name) {
         try {
-            await imagemin([path], {
-                destination: 'temp/compressed',
+            return await Sharp(buffer).toFile('temp/' + name)
+        } catch (err) {
+            console.log(err)
+            return undefined
+        }
+    }
+
+    async compressPng(buffer) {
+        try {
+            return await imagemin.buffer(buffer, {
                 plugins: [imageminOptipng({
                     bitDepthReduction: true,
                     paletteReduction: true,
@@ -41,25 +46,21 @@ class ImageService {
                 })]
             })
 
-            await fs.unlink(path)
-
-            return {
-                folder: 'temp/compressed/'
-            }
         } catch (err) {
             console.log(err)
             return undefined
         }
     }
 
-    async upload(path, destination) {
+    async upload(path, destination, makePublic = false) {
         try {
             const upload = await bucket.upload(path, {
                 destination,
                 gzip: true,
                 metadata: {
                     contentType: "image/png"
-                }
+                },
+                // public: makePublic
             })
 
             await fs.unlink(path)
