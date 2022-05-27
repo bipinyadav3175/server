@@ -31,10 +31,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    banner: {
-        type: String,
-        default: null
-    },
     stories: [
         {
             storyId: mongoose.Schema.Types.ObjectId,

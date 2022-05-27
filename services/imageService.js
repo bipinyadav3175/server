@@ -78,7 +78,7 @@ class ImageService {
      * A function to upload png files to firebase storage
      * @param {string} path Path of the png file to be uploaded
      * @param {string} destination Destination of the png file on the cloud to be uploaded (with file name and extension)
-     * @param {boolean} makePublic Make the image public or not
+     * @param {boolean} makePublic Make the image public or not (optional)(default: false)
      * @returns UploadResponse : Details of the file uploaded by google cloud
      */
 
@@ -96,6 +96,21 @@ class ImageService {
             await fs.unlink(path)
 
             return upload
+        } catch (err) {
+            console.log(err)
+            return undefined
+        }
+    }
+
+    /**
+     * Delete the image in the firebase storage
+     * @param {string} name Name of the image including the folder
+     * @returns Promise of api response (by google cloud)
+     */
+
+    async delete(name) {
+        try {
+            return await bucket.file(name).delete()
         } catch (err) {
             console.log(err)
             return undefined
