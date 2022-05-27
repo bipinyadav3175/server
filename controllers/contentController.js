@@ -407,6 +407,96 @@ class ContentController {
         }
     }
 
+    async delete(req, res) {
+        const email = req.email
+        const id = req.body.id // The id of the story to delete
+
+        if (!id) {
+            return res.json({ message: "Please specify a story id to delete" })
+        }
+
+
+        // 1. Check that the user owns the story or not
+
+        // Get the user
+        let user;
+        try {
+            user = await User.findOne({ email: email }, "stories noOfStories")
+            if (!user) {
+                return res.json({ message: "No user found" })
+            }
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // Checking ownership
+        let userStories = user.stories
+        let userStoryIds = []
+
+        for (let i = 0; i < userStories.length; i++) {
+            let story = userStories[i]
+            userStoryIds.push(story.storyId.toHexString())
+        }
+
+        if (!(id in userStoryIds)) {
+            return res.json({ message: "You cannot delete this story as you don't own it" })
+        }
+
+        // Get the story to be deleted (so that we can get the image urls and we can delete them)
+        let story;
+        try {
+            story = await Story.findById(id, 'data')
+
+            if (!story) {
+                return res.json({ message: "No such story found" })
+            }
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // Delete the images in the cloud
+        let data = story.data
+
+        try {
+            for (let i = 0; i < data.length; i++) {
+                let item = data[i]
+                if (item.type === "IMG") {
+                    const deleteRes = await imageService.delete('postImages/' + item.url)
+                    console.log(deleteRes)
+                }
+            }
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Error deleting images" })
+        }
+
+
+        // Delete the story in the story collection
+        try {
+            await Story.findByIdAndDelete(id)
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Unable to delete the story" })
+        }
+
+        // Delete the story in the users document
+        userStories = userStories.filter((story) => story.storyId.toHexString() !== id)
+        try {
+            await User.findOneAndUpdate({ email: email }, { userStories: userStories, noOfStories: user.noOfStories - 1 })
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Unable to delete the story" })
+        }
+
+        // Successfully deleted the story
+        // Send confirmation to the user
+
+        return res.json({ message: "Story deleted", success: true, deletedStoryId: id })
+
+    }
+
 }
 
 export default new ContentController()

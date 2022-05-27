@@ -39,6 +39,7 @@ router.get("/user/:id", authMiddleware, contentController.user)
 router.get("/user-recent-stories/:id", authMiddleware, contentController.userRecentStories)
 router.get("/like/:id", authMiddleware, contentController.like)
 router.post("/update-profile", [authMiddleware, upload.single("avatar")], profileController.updateProfile)
+router.post("/delete-story", authMiddleware, contentController.delete)
 
 
 export default router
