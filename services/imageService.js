@@ -18,7 +18,16 @@ admin.initializeApp({
 var bucket = admin.storage().bucket();
 
 class ImageService {
+
+    /**
+     * Resizes images of any format and converts to Png
+     * @param {Buffer} buffer The image buffer (any format)
+     * @param {number} width Width of the processed image (height will be auto calculated)
+     * @returns A buffer of resized Png image
+     */
+
     async resize(buffer, width) {
+
         try {
             return await Sharp(buffer).resize(width, null).png().toBuffer()
         } catch (err) {
@@ -26,6 +35,13 @@ class ImageService {
             return undefined
         }
     }
+
+    /**
+     * Saves the buffer in the 'temp/' folder
+     * @param {Buffer} buffer The image buffer to save
+     * @param {string} name The name to be assigned to the file
+     * @returns A promise that fulfills with an object containing information on the resulting file
+     */
 
     async saveBuffer(buffer, name) {
         try {
@@ -35,6 +51,12 @@ class ImageService {
             return undefined
         }
     }
+
+    /**
+     * A function that uses imagemin and imageminOptipng plugin to compress png buffer
+     * @param {Buffer} buffer A png image buffer
+     * @returns The compressed buffer
+     */
 
     async compressPng(buffer) {
         try {
@@ -51,6 +73,14 @@ class ImageService {
             return undefined
         }
     }
+
+    /**
+     * A function to upload png files to firebase storage
+     * @param {string} path Path of the png file to be uploaded
+     * @param {string} destination Destination of the png file on the cloud to be uploaded (with file name and extension)
+     * @param {boolean} makePublic Make the image public or not
+     * @returns UploadResponse : Details of the file uploaded by google cloud
+     */
 
     async upload(path, destination, makePublic = false) {
         try {
