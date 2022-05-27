@@ -439,7 +439,7 @@ class ContentController {
             userStoryIds.push(story.storyId.toHexString())
         }
 
-        if (!(id in userStoryIds)) {
+        if (!userStoryIds.includes(id)) {
             return res.json({ message: "You cannot delete this story as you don't own it" })
         }
 
@@ -463,8 +463,12 @@ class ContentController {
             for (let i = 0; i < data.length; i++) {
                 let item = data[i]
                 if (item.type === "IMG") {
-                    const deleteRes = await imageService.delete('postImages/' + item.url)
-                    console.log(deleteRes)
+                    const imgName = item.url.split('postImages%2F')[1].split('?alt=media')[0]
+                    const deleteRes = await imageService.delete('postImages/' + imgName)
+
+                    if (deleteRes.code === 404) {
+                        return res.json({ message: "Unable to delete images" })
+                    }
                 }
             }
         } catch (err) {
@@ -482,9 +486,9 @@ class ContentController {
         }
 
         // Delete the story in the users document
-        userStories = userStories.filter((story) => story.storyId.toHexString() !== id)
+        const newUserStories = userStories.filter((story) => story.storyId.toHexString() !== id)
         try {
-            await User.findOneAndUpdate({ email: email }, { userStories: userStories, noOfStories: user.noOfStories - 1 })
+            await User.findOneAndUpdate({ email: email }, { userStories: newUserStories, noOfStories: user.noOfStories - 1 })
         } catch (err) {
             console.log(err)
             return res.json({ message: "Unable to delete the story" })
