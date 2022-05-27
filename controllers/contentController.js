@@ -466,9 +466,11 @@ class ContentController {
                     const imgName = item.url.split('postImages%2F')[1].split('?alt=media')[0]
                     const deleteRes = await imageService.delete('postImages/' + imgName)
 
-                    if (deleteRes.code === 404) {
-                        return res.json({ message: "Unable to delete images" })
-                    }
+                    // Still error
+
+                    // if (deleteRes.code === 404) {
+                    //     return res.json({ message: "Unable to delete images" })
+                    // }
                 }
             }
         } catch (err) {
@@ -486,9 +488,9 @@ class ContentController {
         }
 
         // Delete the story in the users document
-        const newUserStories = userStories.filter((story) => story.storyId.toHexString() !== id)
+        const newUserStories = userStories.filter((story) => id !== story.storyId.toHexString())
         try {
-            await User.findOneAndUpdate({ email: email }, { userStories: newUserStories, noOfStories: user.noOfStories - 1 })
+            await User.findOneAndUpdate({ email: email }, { stories: newUserStories, noOfStories: user.noOfStories - 1 })
         } catch (err) {
             console.log(err)
             return res.json({ message: "Unable to delete the story" })
