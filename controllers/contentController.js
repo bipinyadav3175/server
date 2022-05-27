@@ -144,31 +144,29 @@ class ContentController {
 
             let newImgName = nanoid() + "_" + Date.now() + '.png'
             try {
-                // await sharp(img.destination + img.filename).png({ quality: 95, colors: 128 }).toFile('temp/' + newImgName);
-                // fs.unlink(img.destination + img.filename, (err) => {
-                //     if (err) {
+                let buffer = img.buffer
 
-                //         console.log(err)
-                //     }
-                // })
-                // const upload = await bucket.upload('temp/' + newImgName, {
-                //     destination: `postImages/${newImgName}`,
-                //     gzip: true,
-                //     metadata: {
-                //         contentType: "image/png"
-                //     }
-                // })
+                // 1. Resize the buffer
+                buffer = await imageService.resize(buffer, 800)
 
-                const outputInfo = await imageService.resize_to_png(img.destination + img.filename, 800, newImgName)
-                const compressed = await imageService.compressPng('temp/' + newImgName)
-                const upload = await imageService.upload(compressed.folder + newImgName, "postImages/" + newImgName, true)
+                // 2. Compress the buffer
+                buffer = await imageService.compressPng(buffer)
+
+                // 3. Save buffer in temp folder
+                await imageService.saveBuffer(buffer, newImgName)
+
+                // 4. Upload the image to firebase
+                await imageService.upload('temp/' + newImgName, "postImages/" + newImgName, true)
 
                 const imgLink = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/postImages%2F${newImgName}?alt=media`
                 imgUrls.push(imgLink)
 
-                let ind = processedStoryData.findIndex((val) => val.imgName === img.filename)
-                // For loop OP 🔥
+                // Update the details of the image in processedStoryData
+
+                // Find the object to update
+                let ind = processedStoryData.findIndex((val) => val.imgName === img.originalname)
                 processedStoryData[ind].url = imgLink
+                // Delete unnessary fields
                 delete processedStoryData[ind].imgName
                 delete processedStoryData[ind].imgType
 
