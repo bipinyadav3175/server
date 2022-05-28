@@ -505,6 +505,71 @@ class ContentController {
 
     }
 
+    async follow(req, res) {
+        const email = req.email
+        const id = req.body.id
+
+        if (!id) {
+            return res.json({ message: "No id specified" })
+        }
+
+        // 1. Check the user exists and that user is not the one sending request
+        // Checking existance
+        let userToBeFollowed;
+        try {
+            userToBeFollowed = await User.findById(id, "id followerCount followers")
+            if (!userToBeFollowed) {
+                return res.json({ message: "No such user found" })
+            }
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // Checking users are same or not
+        // Yet to do
+
+        // 2. Add the followed user to User document, increase the users following count
+        let user;
+        try {
+            user = await User.findOne({ email: email }, 'id following followingCount')
+            if (!user) {
+                return res.json({ message: "You doesn't exist" })
+            }
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // Update the DB
+        const newFollowing = [...user.following, { userId: userToBeFollowed.id }]
+        try {
+            await User.findOneAndUpdate({ email: email }, {
+                following: newFollowing,
+                followingCount: user.followingCount + 1
+            })
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // 3. Increse the followed users follower count, add the user to followers field
+        const newFollowers = [...userToBeFollowed.followers, { userId: user.id }]
+
+        try {
+            await User.findByIdAndUpdate(id, {
+                followers: newFollowers,
+                followerCount: userToBeFollowed.followerCount + 1
+            })
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        // 4. Inform the user
+        return res.json({ success: true, isFollowedByYou: true })
+    }
+
 }
 
 export default new ContentController()

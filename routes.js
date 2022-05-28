@@ -37,9 +37,10 @@ router.post("/post", [authMiddleware, upload.array("postImages")], contentContro
 router.get("/story/:id", authMiddleware, contentController.loadStory)
 router.get("/user/:id", authMiddleware, contentController.user)
 router.get("/user-recent-stories/:id", authMiddleware, contentController.userRecentStories)
-router.get("/like/:id", authMiddleware, contentController.like)
+router.get("/like/:id", authMiddleware, contentController.like) // Todo -> add the liked story to user document
 router.post("/update-profile", [authMiddleware, upload.single("avatar")], profileController.updateProfile)
 router.post("/delete-story", authMiddleware, contentController.delete)
+router.post("/follow", authMiddleware, contentController.follow)
 
 
 export default router
