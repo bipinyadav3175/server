@@ -472,6 +472,7 @@ class ContentController {
                 } catch (err) {
                     console.log(err)
                     res.json({ message: "Unable to delete images" })
+                    return
                     break
                 }
 
