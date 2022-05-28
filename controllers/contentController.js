@@ -464,11 +464,9 @@ class ContentController {
         let data = story.data
 
         for (let i = 0; i < data.length; i++) {
-            console.log('value of i', i)
             let item = data[i]
             if (item.type === "IMG") {
                 const imgName = item.url.split('postImages%2F')[1].split('?alt=media')[0]
-                console.log(imgName)
                 try {
                     const deleteRes = await imageService.delete('postImages/' + imgName)
                 } catch (err) {
