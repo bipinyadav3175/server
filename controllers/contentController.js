@@ -222,6 +222,10 @@ class ContentController {
 
         try {
             const story = await Story.findOne({ _id: storyId })
+            if (!story) {
+                return res.json({ message: "No such story found" })
+            }
+
             const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories")
 
             var likedStoriesIds = []
@@ -459,24 +463,23 @@ class ContentController {
         // Delete the images in the cloud
         let data = story.data
 
-        try {
-            for (let i = 0; i < data.length; i++) {
-                let item = data[i]
-                if (item.type === "IMG") {
-                    const imgName = item.url.split('postImages%2F')[1].split('?alt=media')[0]
+        for (let i = 0; i < data.length; i++) {
+            console.log('value of i', i)
+            let item = data[i]
+            if (item.type === "IMG") {
+                const imgName = item.url.split('postImages%2F')[1].split('?alt=media')[0]
+                console.log(imgName)
+                try {
                     const deleteRes = await imageService.delete('postImages/' + imgName)
-
-                    // Still error
-
-                    // if (deleteRes.code === 404) {
-                    //     return res.json({ message: "Unable to delete images" })
-                    // }
+                } catch (err) {
+                    console.log(err)
+                    res.json({ message: "Unable to delete images" })
+                    break
                 }
+
             }
-        } catch (err) {
-            console.log(err)
-            return res.json({ message: "Error deleting images" })
         }
+
 
 
         // Delete the story in the story collection
