@@ -12,6 +12,7 @@ import StoryDto from "../dtos/StoryDto.js"
 // Services
 import imageService from "../services/imageService.js"
 import calculateService from "../services/calculateService.js"
+import followService from "../services/followService.js"
 
 // Firebase
 // var admin = require("firebase-admin");
@@ -506,6 +507,7 @@ class ContentController {
     }
 
     async follow(req, res) {
+
         const email = req.email
         const id = req.body.id
 
@@ -514,11 +516,11 @@ class ContentController {
         }
 
         // 1. Check the user exists and that user is not the one sending request
-        // Checking existance
-        let userToBeFollowed;
+
+        let userToBeFollowedOrUnfollowed;
         try {
-            userToBeFollowed = await User.findById(id, "id followerCount followers")
-            if (!userToBeFollowed) {
+            userToBeFollowedOrUnfollowed = await User.findById(id, "id followerCount followers")
+            if (!userToBeFollowedOrUnfollowed) {
                 return res.json({ message: "No such user found" })
             }
         } catch (err) {
@@ -526,48 +528,56 @@ class ContentController {
             return res.json({ message: "Something went wrong" })
         }
 
-        // Checking users are same or not
-        // Yet to do
 
-        // 2. Add the followed user to User document, increase the users following count
         let user;
         try {
             user = await User.findOne({ email: email }, 'id following followingCount')
             if (!user) {
-                return res.json({ message: "You doesn't exist" })
+                return res.json({ message: "You don't exist" })
             }
         } catch (err) {
             console.log(err)
             return res.json({ message: "Something went wrong" })
         }
 
-        // Update the DB
-        const newFollowing = [...user.following, { userId: userToBeFollowed.id }]
-        try {
-            await User.findOneAndUpdate({ email: email }, {
-                following: newFollowing,
-                followingCount: user.followingCount + 1
-            })
-        } catch (err) {
-            console.log(err)
-            return res.json({ message: "Something went wrong" })
+
+        // Is both the users same?
+        if (user.id.toHexString() === userToBeFollowedOrUnfollowed.id.toHexString()) {
+            return res.json({ message: "Trying to follow yourself? Sorry!" })
         }
 
-        // 3. Increse the followed users follower count, add the user to followers field
-        const newFollowers = [...userToBeFollowed.followers, { userId: user.id }]
 
-        try {
-            await User.findByIdAndUpdate(id, {
-                followers: newFollowers,
-                followerCount: userToBeFollowed.followerCount + 1
-            })
-        } catch (err) {
-            console.log(err)
-            return res.json({ message: "Something went wrong" })
+        // Is the creator already followed?
+        let shouldUnfollow = false;
+
+        for (let i = 0; i < user.following.length; i++) {
+            const creatorId = user.following[i].id
+
+            if (creatorId.toHexString() === userToBeFollowedOrUnfollowed.id.toHexString()) {
+                shouldUnfollow = true
+                break
+            }
         }
 
-        // 4. Inform the user
-        return res.json({ success: true, isFollowedByYou: true })
+
+        if (shouldUnfollow) {
+            try {
+                await followService.unfollow(user, userToBeFollowedOrUnfollowed, res)
+            } catch (err) {
+                console.log(err)
+                return res.json({ message: "Something went wrong" })
+            }
+        } else {
+            try {
+                await followService.follow(user, userToBeFollowedOrUnfollowed, res)
+            } catch (err) {
+                console.log(err)
+                return res.json({ message: "Something went wrong" })
+            }
+        }
+
+
+        return res.json({ success: true, isFollowedByYou: shouldUnfollow ? false : true })
     }
 
 }
