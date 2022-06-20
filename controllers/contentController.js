@@ -93,6 +93,9 @@ class ContentController {
                     curated[i] = Object.assign(curated[i], { avatar_50: currentStoryUser.avatar_50 })
                     curated[i] = Object.assign(curated[i], { avatar_200: currentStoryUser.avatar_200 })
                     curated[i] = Object.assign(curated[i], { ownerUsername: currentStoryUser.username })
+
+                    let isFollowedByYou = await followService.checkFollowerShip(user.id.toString(), story.ownerId.toString())
+                    curated[i] = Object.assign(curated[i], { isFollowedByYou: isFollowedByYou })
                 } catch (err) {
                     console.log(err)
                     return res.json({ message: "Unable to load Profile pictures" })
@@ -244,6 +247,8 @@ class ContentController {
 
             let storyDto = new StoryDto(story)
 
+            // let isFollowedByYou = await followService.checkFollowerShip(user.id)
+
             // Transforming story Dto
             storyDto.ownerName = user.name
             storyDto.ownerUsername = user.ownerUsername
@@ -276,18 +281,9 @@ class ContentController {
                 return res.json({ message: "No such user exists" })
             }
 
-            const user = await User.findOne({ email: email }, "followers")
+            const user = await User.findOne({ email: email }, "id followers")
 
-            var isFollowedByYou = false
-            var followerIds = []
-            for (let i = 0; i < user.followers.length; i++) {
-                const follower = user.followers[i]
-                followerIds.push(follower.userId)
-            }
-
-            if (clickedUser.id in followerIds) {
-                isFollowedByYou = true
-            }
+            var isFollowedByYou = followService.checkFollowerShip(user.id.toString(), clickedUser.id.toString())
 
             return res.json({
                 success: true, data: {
@@ -542,42 +538,43 @@ class ContentController {
 
 
         // Is both the users same?
-        if (user.id.toHexString() === userToBeFollowedOrUnfollowed.id.toHexString()) {
-            return res.json({ message: "Trying to follow yourself? Sorry!" })
-        }
+        // if (user.id.toString() === userToBeFollowedOrUnfollowed.id.toString()) {
+        //     return res.json({ message: "Trying to follow yourself? Sorry!" })
+        // }
 
 
         // Is the creator already followed?
-        let shouldUnfollow = false;
+        let shouldFollow = true;
 
         for (let i = 0; i < user.following.length; i++) {
-            const creatorId = user.following[i].id
+            const creatorId = user.following[i].userId
 
-            if (creatorId.toHexString() === userToBeFollowedOrUnfollowed.id.toHexString()) {
-                shouldUnfollow = true
+            if (creatorId.toString() === userToBeFollowedOrUnfollowed.id.toString()) {
+                shouldFollow = false
                 break
             }
         }
 
 
-        if (shouldUnfollow) {
-            try {
-                await followService.unfollow(user, userToBeFollowedOrUnfollowed, res)
-            } catch (err) {
-                console.log(err)
-                return res.json({ message: "Something went wrong" })
-            }
-        } else {
+
+        if (shouldFollow) {
             try {
                 await followService.follow(user, userToBeFollowedOrUnfollowed, res)
             } catch (err) {
                 console.log(err)
                 return res.json({ message: "Something went wrong" })
             }
+        } else {
+            try {
+                await followService.unfollow(user, userToBeFollowedOrUnfollowed, res)
+            } catch (err) {
+                console.log(err)
+                return res.json({ message: "Something went wrong" })
+            }
         }
 
 
-        return res.json({ success: true, isFollowedByYou: shouldUnfollow ? false : true })
+        return res.json({ success: true, isFollowedByYou: shouldFollow ? true : false })
     }
 
 }
