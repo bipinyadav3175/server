@@ -283,7 +283,7 @@ class ContentController {
 
             const user = await User.findOne({ email: email }, "id followers")
 
-            var isFollowedByYou = followService.checkFollowerShip(user.id.toString(), clickedUser.id.toString())
+            var isFollowedByYou = await followService.checkFollowerShip(user.id.toString(), clickedUser.id.toString())
 
             return res.json({
                 success: true, data: {
@@ -535,6 +535,7 @@ class ContentController {
             console.log(err)
             return res.json({ message: "Something went wrong" })
         }
+
 
 
         // Is both the users same?
