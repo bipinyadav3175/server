@@ -95,7 +95,7 @@ class FollowService {
         }
 
         for (let i = 0; i < user.following.length; i++) {
-            const userId = user.following[i]
+            const userId = user.following[i].userId
             if (userId.toString() === creatorId.toString()) {
                 isFollowedByYou = true
                 break
