@@ -76,16 +76,25 @@ class FollowService {
 
     /**
      * Check that the user (userId) follows the creator (creatorId)
-     * @param {string} userId Id of the user sending request
+     * @param {object} userId_or_email Id or Email (at least one) of the user sending request
      * @param {string} creatorId Id of the user to check followership
      * @returns boolean | undefined
      */
 
-    async checkFollowerShip(userId, creatorId) {
+    async checkFollowerShip({ userId, email } = { userId: null, email: null }, creatorId) {
+        if (!userId && !email) {
+            return undefined
+        }
+
         let isFollowedByYou = false;
         let user;
         try {
-            user = await User.findById(userId.toString(), "following")
+            if (userId) {
+                user = await User.findById(userId.toString(), "following")
+            } else {
+                user = await User.findOne({ email }, "following")
+            }
+
             if (!user) {
                 return undefined
             }

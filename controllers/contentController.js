@@ -217,6 +217,7 @@ class ContentController {
     }
 
     async loadStory(req, res) {
+        const email = req.email
         const storyId = req.params.id
 
 
@@ -230,7 +231,7 @@ class ContentController {
                 return res.json({ message: "No such story found" })
             }
 
-            const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories")
+            const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories id")
 
             var likedStoriesIds = []
             for (let i = 0; i < user.likedStories.length; i++) {
@@ -247,13 +248,14 @@ class ContentController {
 
             let storyDto = new StoryDto(story)
 
-            // let isFollowedByYou = await followService.checkFollowerShip(user.id)
+            let isFollowedByYou = await followService.checkFollowerShip(email, user.id)
 
             // Transforming story Dto
             storyDto.ownerName = user.name
             storyDto.ownerUsername = user.ownerUsername
             storyDto.avatar_50 = user.avatar_50
             storyDto.avatar_200 = user.avatar_200
+            storyDto.isFollowedByYou = isFollowedByYou
 
 
             return res.json({ story: storyDto, success: true, isLiked })
