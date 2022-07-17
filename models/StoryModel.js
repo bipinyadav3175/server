@@ -69,7 +69,12 @@ const storySchema = new mongoose.Schema({
     timeToRead: {
         type: Number,
         default: 0
-    }
+    },
+    comments: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
+    ]
 }, { timestamps: true })
 
 export default mongoose.model("story", storySchema)
