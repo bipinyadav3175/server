@@ -44,6 +44,7 @@ router.post("/delete-story", authMiddleware, contentController.delete)
 router.post("/follow", authMiddleware, contentController.follow)
 
 router.post("/add-comment", authMiddleware, commentController.publish)
+router.post("/fetch-comments", authMiddleware, commentController.fetchComments)
 
 
 export default router
