@@ -9,6 +9,7 @@ import authMiddleware from "./middlewares/authMiddleware.js"
 import authController from "./controllers/authController.js"
 import profileController from "./controllers/profileController.js"
 import contentController from "./controllers/contentController.js"
+import commentController from "./controllers/commentController.js"
 
 // Multer Config
 
@@ -41,6 +42,11 @@ router.get("/like/:id", authMiddleware, contentController.like) // Todo -> add t
 router.post("/update-profile", [authMiddleware, upload.single("avatar")], profileController.updateProfile)
 router.post("/delete-story", authMiddleware, contentController.delete)
 router.post("/follow", authMiddleware, contentController.follow)
+
+router.post("/add-comment", authMiddleware, commentController.publish)
+router.post("/fetch-comments", authMiddleware, commentController.fetchComments)
+router.post("/fetch-comment", authMiddleware, commentController.fetchComment)
+router.post("/like-comment", authMiddleware, commentController.likeComment)
 
 
 export default router

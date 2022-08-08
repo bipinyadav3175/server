@@ -147,6 +147,11 @@ const userSchema = new mongoose.Schema({
         {
             userId: mongoose.Schema.Types.ObjectId,
         }
+    ],
+    comments: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
     ]
 }, { timestamps: true })
 
