@@ -152,6 +152,11 @@ const userSchema = new mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId
         }
+    ],
+    lists: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
     ]
 }, { timestamps: true })
 

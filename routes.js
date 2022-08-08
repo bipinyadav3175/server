@@ -10,6 +10,7 @@ import authController from "./controllers/authController.js"
 import profileController from "./controllers/profileController.js"
 import contentController from "./controllers/contentController.js"
 import commentController from "./controllers/commentController.js"
+import listController from "./controllers/listController.js"
 
 // Multer Config
 
@@ -47,6 +48,8 @@ router.post("/add-comment", authMiddleware, commentController.publish)
 router.post("/fetch-comments", authMiddleware, commentController.fetchComments)
 router.post("/fetch-comment", authMiddleware, commentController.fetchComment)
 router.post("/like-comment", authMiddleware, commentController.likeComment)
+
+router.post("/create-reading-list", authMiddleware, listController.create)
 
 
 export default router
