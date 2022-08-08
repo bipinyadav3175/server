@@ -45,6 +45,8 @@ router.post("/follow", authMiddleware, contentController.follow)
 
 router.post("/add-comment", authMiddleware, commentController.publish)
 router.post("/fetch-comments", authMiddleware, commentController.fetchComments)
+router.post("/fetch-comment", authMiddleware, commentController.fetchComment)
+router.post("/like-comment", authMiddleware, commentController.likeComment)
 
 
 export default router
