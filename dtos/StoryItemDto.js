@@ -13,7 +13,7 @@ class StoryItemDto {
     timeToRead
 
     constructor(story) {
-        this.id = story.id
+        this.id = story._id
         this.ownerId = story.ownerId
         this.ownerName = story.ownerName
         this.title = story.title

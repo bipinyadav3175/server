@@ -140,15 +140,20 @@ const userSchema = new mongoose.Schema({
     ],
     followers: [
         {
-            userId: mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
         }
     ],
     following: [
         {
-            userId: mongoose.Schema.Types.ObjectId,
+            type: mongoose.Schema.Types.ObjectId,
         }
     ],
     comments: [
+        {
+            type: mongoose.Schema.Types.ObjectId
+        }
+    ],
+    lists: [
         {
             type: mongoose.Schema.Types.ObjectId
         }

@@ -134,6 +134,11 @@ class CommentController {
                 const id = commentIds[i]
                 let c = {}
                 let a = await Comment.findById(id.toString(), "user text likes createdAt editedAt id likedBy")
+
+                if (!a) {
+                    continue
+                }
+
                 c.id = a.id.toString()
                 c.user = a.user
                 c.text = a.text

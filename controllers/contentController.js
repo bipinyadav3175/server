@@ -13,6 +13,7 @@ import StoryDto from "../dtos/StoryDto.js"
 import imageService from "../services/imageService.js"
 import calculateService from "../services/calculateService.js"
 import followService from "../services/followService.js"
+import listService from "../services/listService.js"
 
 // Firebase
 // var admin = require("firebase-admin");
@@ -29,6 +30,7 @@ import followService from "../services/followService.js"
 class ContentController {
     async homeFeed(req, res) {
         const email = req.email
+        const limit = 7 // Number of stories to be sent to the client per request
 
         try {
             // User data
@@ -37,56 +39,66 @@ class ContentController {
             const userHistory = user.userHistory
 
             // All stories in the data base
-            const stories = await Story.find()
+            const stories = await Story.aggregate().sample(limit)
 
             // Create a new array of curated stories
             var curated = []
-            const limit = 7 // Number of stories to be sent to the client per request
 
-            for (let i = 0; curated.length < limit; i++) {
-                // Genearate a random index
-                const random = Math.floor(Math.random() * stories.length)
-                var randomStory = new Object(stories[random])
+            // for (let i = 0; curated.length < limit; i++) {
+            //     // Genearate a random index
+            //     const random = Math.floor(Math.random() * stories.length)
+            //     var randomStory = new Object(stories[random])
 
-                // Check the existence of random story in userCreatedStories
-                // var userCreatedStoryIds = []
-                // for (let i = 0; i < userCreatedStories.length; i++) {
-                //     const story = userCreatedStories[i]
+            //     // Check the existence of random story in userCreatedStories
+            //     // var userCreatedStoryIds = []
+            //     // for (let i = 0; i < userCreatedStories.length; i++) {
+            //     //     const story = userCreatedStories[i]
 
-                //     userCreatedStoryIds.push(story.storyId.toHexString())
-                // }
-
-
-                // if (userCreatedStoryIds.includes(randomStory.id)) {
-                //     continue
-                // }
-
-                // Check the existence of random story in userhistory
-                var historyStoryIds = []
-
-                if (userHistory) {
-                    for (let i = 0; i < userHistory.length; i++) {
-                        const story = userHistory[i]
-
-                        historyStoryIds.push(story.storyId.toHexString)
-                    }
-                }
-
-                if (historyStoryIds.includes(randomStory.id)) {
-                    continue
-                }
+            //     //     userCreatedStoryIds.push(story.storyId.toHexString())
+            //     // }
 
 
-                // All clear -> Push into Curated Array with only required fields
-                const storyItemDto = new StoryItemDto(randomStory)
+            //     // if (userCreatedStoryIds.includes(randomStory.id)) {
+            //     //     continue
+            //     // }
+
+            //     // Check the existence of random story in userhistory
+            //     var historyStoryIds = []
+
+            //     if (userHistory) {
+            //         for (let i = 0; i < userHistory.length; i++) {
+            //             const story = userHistory[i]
+
+            //             historyStoryIds.push(story.storyId.toHexString)
+            //         }
+            //     }
+
+            //     if (historyStoryIds.includes(randomStory.id)) {
+            //         continue
+            //     }
+
+
+            //     // All clear -> Push into Curated Array with only required fields
+            //     const storyItemDto = new StoryItemDto(randomStory)
+
+            //     curated.push(storyItemDto)
+
+            // }
+
+            for (let i = 0; i < stories.length; i++) {
+                const story = stories[i]
+                const storyItemDto = new StoryItemDto(story)
 
                 curated.push(storyItemDto)
-
             }
 
 
             for (let i = 0; i < curated.length; i++) {
                 let story = curated[i]
+                if (i === 0) {
+                    console.log('user', user.id)
+                    console.log('story', story.id)
+                }
 
                 try {
                     let currentStoryUser = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 username")
@@ -94,8 +106,13 @@ class ContentController {
                     curated[i] = Object.assign(curated[i], { avatar_200: currentStoryUser.avatar_200 })
                     curated[i] = Object.assign(curated[i], { ownerUsername: currentStoryUser.username })
 
-                    let isFollowedByYou = await followService.checkFollowerShip(user.id.toString(), story.ownerId.toString())
+                    let isFollowedByYou = await followService.checkFollowerShip({ userId: user.id.toString() }, story.ownerId.toString())
+                    // console.log('user', user)
+                    // console.log('story', story)
+                    let isAddedToList = await listService.isAddedToList({ userId: user.id.toString() }, story.id.toString())
+
                     curated[i] = Object.assign(curated[i], { isFollowedByYou: isFollowedByYou })
+                    curated[i] = Object.assign(curated[i], { isAddedToList: isAddedToList })
                 } catch (err) {
                     console.log(err)
                     return res.json({ message: "Unable to load Profile pictures" })
@@ -111,6 +128,9 @@ class ContentController {
             console.log(err)
             return res.json({ message: "Something went wrong!" })
         }
+
+
+
 
 
     }
@@ -248,7 +268,8 @@ class ContentController {
 
             let storyDto = new StoryDto(story)
 
-            let isFollowedByYou = await followService.checkFollowerShip(email, user.id)
+            let isFollowedByYou = await followService.checkFollowerShip({ email: email }, user.id)
+            let isAddedToList = await listService.isAddedToList({ email: email }, storyId)
 
             // Transforming story Dto
             storyDto.ownerName = user.name
@@ -256,6 +277,7 @@ class ContentController {
             storyDto.avatar_50 = user.avatar_50
             storyDto.avatar_200 = user.avatar_200
             storyDto.isFollowedByYou = isFollowedByYou
+            storyDto.isAddedToList = isAddedToList
 
 
             return res.json({ story: storyDto, success: true, isLiked })
@@ -265,7 +287,6 @@ class ContentController {
             return res.json({ message: "No such story", success: false })
         }
 
-        return res.end()
     }
 
     async user(req, res) {
@@ -550,7 +571,7 @@ class ContentController {
         let shouldFollow = true;
 
         for (let i = 0; i < user.following.length; i++) {
-            const creatorId = user.following[i].userId
+            const creatorId = user.following[i]
 
             if (creatorId.toString() === userToBeFollowedOrUnfollowed.id.toString()) {
                 shouldFollow = false
