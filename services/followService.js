@@ -12,7 +12,7 @@ class FollowService {
         // 1. Add the followed user to User document, increase the users following count
 
         // Update the DB
-        const newFollowing = [...user.following, { userId: userToBeFollowed.id.toString() }]
+        const newFollowing = [...user.following, userToBeFollowed.id.toString()]
         try {
             await User.findByIdAndUpdate(user.id.toString(), {
                 following: newFollowing,
@@ -25,7 +25,7 @@ class FollowService {
 
 
         // 2. Increse the followed users follower count, add the user to followers field
-        const newFollowers = [...userToBeFollowed.followers, { userId: user.id.toString() }]
+        const newFollowers = [...userToBeFollowed.followers, user.id.toString()]
 
         try {
             await User.findByIdAndUpdate(userToBeFollowed.id.toString(), {
@@ -48,7 +48,7 @@ class FollowService {
     async unfollow(user, userToBeUnfollowed, res) {
         // 1. Remove the followed user from User document, decrease the users following count
 
-        const newFollowing = user.following.filter((value) => value.userId.toString() !== userToBeUnfollowed.id.toString())
+        const newFollowing = user.following.filter((userId) => userId.toString() !== userToBeUnfollowed.id.toString())
         try {
             await User.findByIdAndUpdate(user.id.toString(), {
                 following: newFollowing,
@@ -61,7 +61,7 @@ class FollowService {
 
 
         // 2. Decrease the followed users follower count, remove the user from followers field
-        const newFollowers = userToBeUnfollowed.followers.filter((value) => value.userId.toString() !== user.id.toString())
+        const newFollowers = userToBeUnfollowed.followers.filter((userId) => userId.toString() !== user.id.toString())
 
         try {
             await User.findByIdAndUpdate(userToBeUnfollowed.id.toString(), {
@@ -104,13 +104,12 @@ class FollowService {
         }
 
         for (let i = 0; i < user.following.length; i++) {
-            const userId = user.following[i].userId
+            const userId = user.following[i]
             if (userId.toString() === creatorId.toString()) {
                 isFollowedByYou = true
                 break
             }
         }
-
         return isFollowedByYou
     }
 }
