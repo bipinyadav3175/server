@@ -14,6 +14,7 @@ import imageService from "../services/imageService.js"
 import calculateService from "../services/calculateService.js"
 import followService from "../services/followService.js"
 import listService from "../services/listService.js"
+import utility from "../services/utilityService.js"
 
 // Firebase
 // var admin = require("firebase-admin");
@@ -292,41 +293,47 @@ class ContentController {
     async user(req, res) {
         const id = req.params.id
         const email = req.email
+        const requiredFields = utility.getRequiredFields(req?.query)
 
         if (!id) {
             return res.json({ message: "No id specified" })
         }
 
+        let clickedUser;
+        let isFollowedByYou = false
         try {
-            const clickedUser = await User.findById(id, "name username avatar_50 avatar_200 banner bio storyViews followerCount followingCount id")
+            clickedUser = await User.findById(id, "name username avatar_50 avatar_200 banner bio storyViews followerCount followingCount id")
 
             if (!clickedUser) {
                 return res.json({ message: "No such user exists" })
             }
 
-            const user = await User.findOne({ email: email }, "id followers")
+            isFollowedByYou = await followService.checkFollowerShip({ email }, clickedUser.id.toString())
 
-            var isFollowedByYou = await followService.checkFollowerShip(user.id.toString(), clickedUser.id.toString())
-
-            return res.json({
-                success: true, data: {
-                    id: clickedUser.id,
-                    name: clickedUser.name,
-                    username: clickedUser.username,
-                    avatar_50: clickedUser.avatar_50,
-                    avatar_200: clickedUser.avatar_200,
-                    banner: clickedUser.banner,
-                    bio: clickedUser.bio,
-                    storyViews: clickedUser.storyViews,
-                    followerCount: clickedUser.followerCount,
-                    followingCount: clickedUser.followingCount,
-                    isFollowedByYou
-                }
-            })
 
         } catch (err) {
             return res.json({ message: "Something went wrong" })
         }
+
+        let data = {
+            id: clickedUser.id,
+            name: clickedUser.name,
+            username: clickedUser.username,
+            avatar_50: clickedUser.avatar_50,
+            avatar_200: clickedUser.avatar_200,
+            bio: clickedUser.bio,
+            storyViews: clickedUser.storyViews,
+            followerCount: clickedUser.followerCount,
+            followingCount: clickedUser.followingCount,
+            isFollowedByYou
+        }
+
+        const reqData = utility.getRequiredData(data, requiredFields)
+
+        return res.json({
+            success: true, data: reqData
+        })
+
     }
 
     async userRecentStories(req, res) {

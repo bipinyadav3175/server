@@ -69,7 +69,7 @@ class ProfileController {
         // user
         let user;
         try {
-            user = await User.findOne({ email: email }, 'username name bio usernameLastUpdated avatar_50 avatar_200')
+            user = await User.findOne({ email: email }, 'username name bio usernameLastUpdated')
 
             if (!user) {
                 return res.json({ message: "No user found" })
@@ -108,52 +108,11 @@ class ProfileController {
 
         }
 
-        var hasAvatar = false
 
-        if (req.file) {
-            hasAvatar = true
-        }
-        // Resize & Compress avatar
-        let url50; // Variable for 50x50 avatar's uploaded url
-        let url200;
-        if (hasAvatar) {
-            try {
-                const { buffer, originalname: originalName } = req.file
-
-                const name50 = nanoid() + '_' + Date.now() + '.png'
-                const name200 = nanoid() + '_' + Date.now() + '.png'
-
-                // Avatar 50x50
-                var buffer50 = await imageService.resize(buffer, 50)
-                buffer50 = await imageService.compressPng(buffer50)
-
-                // Avatar 200x200
-                var buffer200 = await imageService.resize(buffer, 200)
-                buffer200 = await imageService.compressPng(buffer200)
-
-                // Save both buffers to disk so that it could be uploaded
-                await imageService.saveBuffer(buffer50, name50)
-                await imageService.saveBuffer(buffer200, name200)
-
-                // Upload Both
-                const uploaded50 = await imageService.upload('temp/' + name50, 'avatars/' + name50, true)
-                const uploaded200 = await imageService.upload('temp/' + name200, 'avatars/' + name200, true)
-
-                url50 = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/avatars%2F${name50}?alt=media`
-                url200 = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/avatars%2F${name200}?alt=media`
-
-            } catch (err) {
-                console.log(err)
-                return res.json({ message: "Unable to process Avatar" })
-            }
-        }
-
-        // update the avatar url, name, username, bio in the DB
+        // update the name, username, bio in the DB
 
         try {
             await User.findOneAndUpdate({ email: email }, {
-                avatar_50: hasAvatar ? url50 : user.avatar_50,
-                avatar_200: hasAvatar ? url200 : user.avatar_200,
                 name: name,
                 bio: bio ? bio : null,
                 username: shouldUpdateUsername ? username : user.username, // username -> new username | user.username -> old username
@@ -164,7 +123,79 @@ class ProfileController {
             return res.json({ message: "Something went wrong" })
         }
 
-        return res.json({ success: true, message: shouldUpdateUsername ? "Profile Updated" : "You can only change your username after 7 days of last updating", profile: { avatar_50: url50, avatar_200: url200, username: shouldUpdateUsername ? username : user.username, name, bio: bio ? bio : '' } })
+        return res.json({
+            success: true,
+            message: username === user.username ? 'Profile updated' : shouldUpdateUsername ? "Profile Updated" : "You can only change your username after 7 days of last updating",
+            profile: {
+                username: shouldUpdateUsername ? username : user.username,
+                name,
+                bio: bio ? bio : ''
+            }
+        })
+    }
+
+    async uploadAvatar(req, res) {
+        const email = req.email
+
+
+        if (!req.file) {
+            return res.json({ message: "No avatar found" })
+        }
+
+        // Resize & Compress avatar
+        let url50; // Variable for 50x50 avatar's uploaded url
+        let url200;
+
+        try {
+            const { buffer, originalname: originalName } = req.file
+
+            const name50 = nanoid() + '_' + Date.now() + '.png'
+            const name200 = nanoid() + '_' + Date.now() + '.png'
+
+            // Avatar 50x50
+            var buffer50 = await imageService.resize(buffer, 50)
+            buffer50 = await imageService.compressPng(buffer50)
+
+            // Avatar 200x200
+            var buffer200 = await imageService.resize(buffer, 200)
+            buffer200 = await imageService.compressPng(buffer200)
+
+            // Save both buffers to disk so that it could be uploaded
+            await imageService.saveBuffer(buffer50, name50)
+            await imageService.saveBuffer(buffer200, name200)
+
+
+            // Upload Both
+            const uploaded50 = await imageService.upload('temp/' + name50, 'avatars/' + name50, true)
+            const uploaded200 = await imageService.upload('temp/' + name200, 'avatars/' + name200, true)
+
+            url50 = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/avatars%2F${name50}?alt=media`
+            url200 = `https://firebasestorage.googleapis.com/v0/b/wisdom-dev-1650365156696.appspot.com/o/avatars%2F${name200}?alt=media`
+
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Unable to process Avatar" })
+        }
+
+        // update the avatar in db
+
+        try {
+            await User.findOneAndUpdate({ email: email }, {
+                avatar_50: url50,
+                avatar_200: url200,
+            })
+        } catch (err) {
+            conosle.log(err)
+            return res.json({ message: "Something went wrong" })
+        }
+
+        return res.json({
+            success: true,
+            profile: {
+                avatar_50: url50,
+                avatar_200: url200
+            }
+        })
     }
 }
 
