@@ -142,6 +142,22 @@ class ProfileController {
             return res.json({ message: "No avatar found" })
         }
 
+        // Old avatars to delete them
+        let oldAvatar_50;
+        let oldAvatar_200;
+        try {
+            const user = await User.findOne({ email: email }, "avatar_50 avatar_200")
+            if (!user || (!user.avatar_50 && !user.avatar_200)) {
+                return res.json({ message: "Unable to process" })
+            }
+
+            oldAvatar_200 = user.avatar_200
+            oldAvatar_50 = user.avatar_50
+
+        } catch (err) {
+            console.log(err)
+        }
+
         // Resize & Compress avatar
         let url50; // Variable for 50x50 avatar's uploaded url
         let url200;
@@ -177,8 +193,18 @@ class ProfileController {
             return res.json({ message: "Unable to process Avatar" })
         }
 
-        // update the avatar in db
+        // Delete old avatars
+        const img_200 = oldAvatar_200.split('avatars%2F')[1].split('?alt=media')[0]
+        const img_50 = oldAvatar_50.split('avatars%2F')[1].split('?alt=media')[0]
+        try {
+            await imageService.delete('avatars/' + img_200)
+            await imageService.delete('avatars/' + img_50)
+        } catch (err) {
+            console.log(err)
+            return res.json({ message: "Unable to delete images" })
+        }
 
+        // update the avatar in db
         try {
             await User.findOneAndUpdate({ email: email }, {
                 avatar_50: url50,

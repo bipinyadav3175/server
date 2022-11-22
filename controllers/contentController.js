@@ -500,7 +500,6 @@ class ContentController {
                     console.log(err)
                     res.json({ message: "Unable to delete images" })
                     return
-                    break
                 }
 
             }
