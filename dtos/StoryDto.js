@@ -1,7 +1,5 @@
 class StoryDto {
     id
-    ownerId
-    ownerName
     title
     dateCreated
     tags
@@ -12,8 +10,6 @@ class StoryDto {
 
     constructor(story) {
         this.id = story.id
-        this.ownerId = story.ownerId
-        this.ownerName = story.ownerName
         this.title = story.title
         this.dateCreated = story.dateCreated
         this.tags = story.tags
