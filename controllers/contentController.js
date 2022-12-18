@@ -252,7 +252,7 @@ class ContentController {
                 return res.json({ message: "No such story found" })
             }
 
-            const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories id")
+            const user = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 name username likedStories bio")
 
             var likedStoriesIds = []
             for (let i = 0; i < user.likedStories.length; i++) {
@@ -273,15 +273,30 @@ class ContentController {
             let isAddedToList = await listService.isAddedToList({ email: email }, storyId)
 
             // Transforming story Dto
-            storyDto.ownerName = user.name
-            storyDto.ownerUsername = user.ownerUsername
-            storyDto.avatar_50 = user.avatar_50
-            storyDto.avatar_200 = user.avatar_200
-            storyDto.isFollowedByYou = isFollowedByYou
-            storyDto.isAddedToList = isAddedToList
+            // storyDto.ownerName = user.name
+            // storyDto.ownerUsername = user.ownerUsername
+            // storyDto.avatar_50 = user.avatar_50
+            // storyDto.avatar_200 = user.avatar_200
+            // storyDto.isFollowedByYou = isFollowedByYou
+            // storyDto.isAddedToList = isAddedToList
 
+            storyDto.owner = {
+                id: story.ownerId,
+                name: user.name,
+                username: user.username,
+                bio: user.bio,
+                avatars: {
+                    avatar_50: user.avatar_50,
+                    avatar_200: user.avatar_200
+                },
+                isFollowedByYou: isFollowedByYou
+            }
+            storyDto.status = {
+                isAddedToList: isAddedToList,
+                isLiked: isLiked
+            }
 
-            return res.json({ story: storyDto, success: true, isLiked })
+            return res.json({ story: storyDto, success: true })
 
         } catch (err) {
             console.log(err)
