@@ -16,6 +16,9 @@ import followService from "../services/followService.js"
 import listService from "../services/listService.js"
 import utility from "../services/utilityService.js"
 
+// Constants
+import categories from "../constants/categories.js"
+
 // Firebase
 // var admin = require("firebase-admin");
 // var serviceAccount = require("../wisdom-dev-1650365156696-firebase-adminsdk-jiktt-e0ccd5a272.json");
@@ -620,6 +623,10 @@ class ContentController {
 
 
         return res.json({ success: true, isFollowedByYou: shouldFollow ? true : false })
+    }
+
+    async getAllCategories(req, res) {
+        return res.json({ success: true, categories })
     }
 
 }

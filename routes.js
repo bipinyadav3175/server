@@ -36,6 +36,7 @@ router.get("/username-available/:username", authMiddleware, profileController.us
 router.get("/save-username/:username", authMiddleware, profileController.saveUsername)
 router.get("/feed", authMiddleware, contentController.homeFeed) // yet to be done
 router.post("/post", [authMiddleware, upload.array("postImages")], contentController.post)
+router.get('/categories', authMiddleware, contentController.getAllCategories)
 router.get("/story/:id", authMiddleware, contentController.loadStory)
 router.get("/user/:id", authMiddleware, contentController.user)
 router.get("/user-recent-stories/:id", authMiddleware, contentController.userRecentStories)
