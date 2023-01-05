@@ -15,7 +15,7 @@ class DateTimeService {
     }
 
     splitDate(raw) {
-        const dateObject = newDate(raw)
+        const dateObject = new Date(raw)
         const year = dateObject.getUTCFullYear()
         const month = dateObject.getUTCMonth() + 1
         const date = dateObject.getUTCDate()

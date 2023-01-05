@@ -11,6 +11,7 @@ import profileController from "./controllers/profileController.js"
 import contentController from "./controllers/contentController.js"
 import commentController from "./controllers/commentController.js"
 import listController from "./controllers/listController.js"
+import streakController from "./controllers/streakController.js"
 
 // Multer Config
 
@@ -58,6 +59,9 @@ router.post("/get-list", authMiddleware, listController.getList)
 router.post("/add-story-to-list", authMiddleware, listController.addStory)
 router.post("/remove-story-from-list", authMiddleware, listController.removeStory)
 router.post("/change-list-name", authMiddleware, listController.changeName)
+
+router.post("/streak/update", authMiddleware, streakController.update)
+router.get("/streak", authMiddleware, streakController.getDetails)
 
 
 export default router

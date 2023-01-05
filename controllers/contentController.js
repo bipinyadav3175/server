@@ -105,10 +105,11 @@ class ContentController {
                 }
 
                 try {
-                    let currentStoryUser = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 username")
+                    let currentStoryUser = await User.findOne({ _id: story.ownerId }, "avatar_50 avatar_200 username bio")
                     curated[i] = Object.assign(curated[i], { avatar_50: currentStoryUser.avatar_50 })
                     curated[i] = Object.assign(curated[i], { avatar_200: currentStoryUser.avatar_200 })
                     curated[i] = Object.assign(curated[i], { ownerUsername: currentStoryUser.username })
+                    curated[i] = Object.assign(curated[i], { bio: currentStoryUser.bio })
 
                     let isFollowedByYou = await followService.checkFollowerShip({ userId: user.id.toString() }, story.ownerId.toString())
                     // console.log('user', user)

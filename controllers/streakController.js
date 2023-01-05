@@ -1,6 +1,7 @@
 import Streak from "../models/streakModel.js"
 import userService from "../services/userService.js"
 import dateTimeService from "../services/dateTimeService.js"
+import utility from "../services/utilityService.js"
 
 class StreakController {
 
@@ -14,6 +15,7 @@ class StreakController {
 
 
         let streak;
+        let newDocument = false;
         let userId = await userService.getAlternate({ email })
         try {
             streak = await Streak.findOne({ userId })
@@ -26,23 +28,50 @@ class StreakController {
         let completed = false
 
         if (!streak) {
+            newDocument = true
 
             streak = {
                 userId: userId,
-                currentStreak: read >= 60 * 10 ? 1 : 0,
-                longestStreak: read >= 60 * 10 ? 1 : 0
+                currentStreak: 0,
+                longestStreak: 0,
+                dates: {}
             }
-            streak[todaysDate] = {
-                timeSpent: read
+
+            streak.dates[todaysDate] = {
+                timeSpent: read,
+                completed: false
             }
+        }
+
+        // Update time spent
+        if (streak.dates[todaysDate] && streak.dates[todaysDate].timeSpent) {
+
+            streak.dates[todaysDate].timeSpent = streak.dates[todaysDate].timeSpent + read
+
         } else {
-            // Check that the streak is continued
+            streak.dates[todaysDate] = {
+                timeSpent: read,
+                completed: false
+            }
+        }
+
+
+        if (!streak.dates[todaysDate].completed) {
+            // Todays streak completed or not after sending this request
+            if (streak.dates[todaysDate].timeSpent >= 60 * 10) { // 10 minutes
+                completed = true
+                streak.dates[todaysDate].completed = true
+            } else {
+                streak.dates[todaysDate].completed = false
+            }
+
+            // Check that the streak is continued or broke
             const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 86400000
             const yesterdaysDate = dateTimeService.formatDate(new Date() - oneDayInMilliseconds)
 
-            if (streak.dates[yesterdaysDate]) {
-                if (!streak.dates[todaysDate]) {
-                    streak.currentStreak++
+            if (streak.dates[yesterdaysDate] && streak.dates[yesterdaysDate].completed) {
+                if (streak.dates[todaysDate] && streak.dates[todaysDate].completed) {
+                    streak.currentStreak = streak.currentStreak + 1
                     if (streak.currentStreak > streak.longestStreak) {
                         streak.longestStreak = streak.currentStreak
                     }
@@ -53,31 +82,55 @@ class StreakController {
 
             }
 
-            streak.dates[todaysDate] = {
-                timeSpent: streak.dates[todaysDate].timeSpent ? streak.dates[todaysDate].timeSpent + read : read
+            // For first streak
+            if (streak.currentStreak === 0 && streak.dates[todaysDate] && streak.dates[todaysDate].completed) {
+                streak.currentStreak = 1
+
+                if (streak.currentStreak > streak.longestStreak) {
+                    streak.longestStreak = streak.currentStreak
+                }
             }
-            if (streak.dates[todaysDate].timeSpent >= 60 * 10) { // 10 minutes
-                completed = true
-            }
+        } else {
+            completed = true
         }
+
 
         // Save the streak data
         try {
-            await Streak.findOneAndUpdate({ userId }, {
-                currentStreak: streak.currentStreak,
-                dates: streak.dates
-            })
+            if (newDocument) {
+                const s = new Streak({
+                    userId: userId,
+                    dates: streak.dates,
+                    currentStreak: streak.currentStreak,
+                    longestStreak: streak.longestStreak
+                })
+
+                await s.save()
+            } else {
+                await Streak.findOneAndUpdate({ userId }, {
+                    currentStreak: streak.currentStreak,
+                    dates: streak.dates,
+                    longestStreak: streak.longestStreak
+                })
+            }
+
         } catch (err) {
             console.log(err)
             return res.json({ message: "Something went wrong" })
         }
 
-        return res.json({ success: true, completed })
+        return res.json({
+            success: true, streak: {
+                completedToday: completed,
+                currentStreak: streak.currentStreak
+            }
+        })
 
     }
 
     async getDetails(req, res) {
         const email = req.email
+        const requiredFields = utility.getRequiredFields(req?.query)
 
         let streak;
         let userId = await userService.getAlternate({ email })
@@ -94,19 +147,58 @@ class StreakController {
         }
 
         let currentMonthDates = {}
-        const dateKeys = streak.dates.keys()
+        const dateKeys = Object.keys(streak.dates)
+
+        // Streak for the day is completed or not
+        let completed = false;
 
         for (let i = 0; i < dateKeys.length; i++) {
             let key = dateKeys[i]
-            const { month } = dateTimeService.splitDate(key)
-            const { month: currentMonth } = dateTimeService.splitDate(new Date())
+            const { month, year, date } = dateTimeService.splitDate(key)
+            const { month: currentMonth, year: currentYear, date: currentDate } = dateTimeService.splitDate(new Date())
 
             if (month === currentMonth && streak.dates[key].timeSpent >= 60 * 10) { // 10 minutes
                 currentMonthDates[key] = streak.dates[key]
             }
+
         }
 
-        return res.json({ success: true, currentStreak: streak.currentStreak, dates: currentMonthDates })
+        const todaysDate = dateTimeService.formatDate(new Date())
+
+        // Check for today streak completion
+        if (streak.dates[todaysDate] && streak.dates[todaysDate].completed) {
+            completed = true
+        }
+
+        // Check for broken streak
+        const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 86400000
+        const yesterdaysDate = dateTimeService.formatDate(new Date() - oneDayInMilliseconds)
+        if (!streak.dates[yesterdaysDate] || !streak.dates[yesterdaysDate].completed) {
+            streak.currentStreak = 0
+
+            // Save streak Data
+            try {
+                await Streak.findOneAndUpdate({ userId }, {
+                    currentStreak: 0
+                })
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
+
+        const rawData = {
+            currentStreak: streak.currentStreak,
+            dates: currentMonthDates,
+            completed,
+            longestStreak: streak.longestStreak
+        }
+        const requiredData = utility.getRequiredData(rawData, requiredFields)
+
+        return res.json({
+            success: true,
+            streak: requiredData
+        })
 
     }
 
