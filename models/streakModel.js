@@ -15,12 +15,14 @@ const streakSchema = new mongoose.Schema({
         default: 0
     },
     dates: {
-        date: {
-            timeSpent: {
-                type: Number,
-                default: 0
-            }
-        }
+        // date: {
+        //     timeSpent: {
+        //         type: Number,
+        //         default: 0
+        //     }
+        // }
+        type: Object,
+        default: {}
     }
 })
 
