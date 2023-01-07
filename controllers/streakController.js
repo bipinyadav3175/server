@@ -173,7 +173,7 @@ class StreakController {
         // Check for broken streak
         const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 86400000
         const yesterdaysDate = dateTimeService.formatDate(new Date() - oneDayInMilliseconds)
-        if (!streak.dates[yesterdaysDate] || !streak.dates[yesterdaysDate].completed) {
+        if ((!streak.dates[yesterdaysDate] || !streak.dates[yesterdaysDate].completed) && !completed) {
             streak.currentStreak = 0
 
             // Save streak Data
