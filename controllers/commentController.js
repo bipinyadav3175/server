@@ -64,7 +64,7 @@ class CommentController {
         try {
             await Story.findByIdAndUpdate(storyId, {
                 comments: [...story.comments, commentId],
-                commentsCount: story.commentsCound + 1
+                commentCount: story.commentCount + 1
             })
         } catch (err) {
             console.log(err)
@@ -82,7 +82,7 @@ class CommentController {
         }
 
         // Success
-        return res.json({ message: 'Comment published', success: true, comment: { storyId, text: commentText, user: { id: userId, username: user.username, avatar_50: user.avatar_50, avatar_200: user.avatar_200, name: user.name }, stats: { likes: 0 } } })
+        return res.json({ message: 'Comment published', success: true, comment: { id: commentId, storyId, text: commentText, user: { id: userId, username: user.username, avatar_50: user.avatar_50, avatar_200: user.avatar_200, name: user.name }, stats: { likes: 0 } } })
 
     }
 
